@@ -18,7 +18,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		c.Set("db", db)
 	})
 
-	r.POST("/register", controllers.CreateUser)
+	r.POST("/register", controllers.RegisterUser)
 	r.POST("/login", controllers.LoginUser)
 
 	userRoutes := r.Group("/users")

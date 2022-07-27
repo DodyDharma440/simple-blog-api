@@ -2,27 +2,36 @@ package main
 
 import (
 	"final-project/config"
+	"final-project/docs"
 	"final-project/routes"
 
-	"github.com/swaggo/swag/example/basic/docs"
+	_ "final-project/docs"
 )
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @title           Swagger Example API
+// @version         1.0
+// @description     This is a sample server celler server.
+// @termsOfService  http://swagger.io/terms/
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host      localhost:8080
-// @BasePath  /api/v1
+// @BasePath  /
 
-// @termsOfService http://swagger.io/terms/
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
-	docs.SwaggerInfo.Title = "Swagger Example API"
-	docs.SwaggerInfo.Description = "This is a sample server Movie."
-	docs.SwaggerInfo.Version = "1.0"
+	// programmatically set swagger info
+	docs.SwaggerInfo.Title = "Blog API"
+	docs.SwaggerInfo.Description = "This API Blog."
+	docs.SwaggerInfo.Version = "2.0"
 	docs.SwaggerInfo.Host = "localhost:8080"
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
@@ -31,5 +40,5 @@ func main() {
 	defer sqlDB.Close()
 
 	r := routes.SetupRouter(db)
-	r.Run()
+	r.Run(":8080")
 }

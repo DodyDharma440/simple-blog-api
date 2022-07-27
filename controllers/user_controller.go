@@ -22,6 +22,13 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+// Get All Users godoc
+// @Summary     Get all users.
+// @Tags        User
+// @Produce     json
+// @Success     200 {object} []models.User
+// @Router      /users [get]
+// @Security ApiKeyAuth
 func GetUsers(c *gin.Context) {
 	var users []models.User
 
@@ -35,6 +42,14 @@ func GetUsers(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, users)
 }
 
+// Get User By ID godoc
+// @Summary     Get user.
+// @Tags        User
+// @Produce     json
+// @Param id path string true "user id"
+// @Success     200 {object} models.User
+// @Router      /users/{id} [get]
+// @Security ApiKeyAuth
 func GetUser(c *gin.Context) {
 	var user models.User
 
@@ -47,6 +62,14 @@ func GetUser(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, user)
 }
 
+// Create User godoc
+// @Summary     Create user.
+// @Tags        User
+// @Produce     json
+// @Param Body body UserInput true "body for create user"
+// @Success     200 {object} models.User
+// @Router      /users [post]
+// @Security ApiKeyAuth
 func CreateUser(c *gin.Context) {
 	var input UserInput
 
@@ -76,6 +99,15 @@ func CreateUser(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusCreated, &user)
 }
 
+// Update User godoc
+// @Summary     Update user.
+// @Tags        User
+// @Produce     json
+// @Param id path string true "user id"
+// @Param Body body UserInput true "body for update user"
+// @Success     200 {object} models.User
+// @Router      /users/{id} [put]
+// @Security ApiKeyAuth
 func UpdateUser(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var user models.User
@@ -106,6 +138,14 @@ func UpdateUser(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, &user)
 }
 
+// Delete User godoc
+// @Summary     Delete user.
+// @Tags        User
+// @Produce     json
+// @Param id path string true "user id"
+// @Success     200 {object} bool
+// @Router      /users/{id} [delete]
+// @Security ApiKeyAuth
 func DeleteUser(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var user models.User
@@ -123,6 +163,13 @@ func DeleteUser(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, true)
 }
 
+// Login User godoc
+// @Summary     Login user.
+// @Description Login User.
+// @Tags        Auth
+// @Param Body body LoginInput true "the body to login"
+// @Produce     json
+// @Router      /login [post]
 func LoginUser(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var input LoginInput
@@ -145,4 +192,40 @@ func LoginUser(c *gin.Context) {
 	}
 
 	utils.CreateResponse(c, http.StatusOK, token)
+}
+
+// Register User godoc
+// @Summary     Register user.
+// @Tags        Auth
+// @Produce     json
+// @Param Body body UserInput true "body for register user"
+// @Success     200 {object} models.User
+// @Router      /register [post]
+func RegisterUser(c *gin.Context) {
+	var input UserInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	user := models.User{
+		Name:     input.Name,
+		Email:    input.Email,
+		Password: input.Password,
+	}
+
+	if err := user.BeforeSave(); err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := db.Create(&user).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusCreated, &user)
 }
