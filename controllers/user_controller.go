@@ -84,12 +84,12 @@ func CreateUser(c *gin.Context) {
 		Password: input.Password,
 	}
 
-	if err := user.BeforeSave(); err != nil {
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := user.BeforeSave(db); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	db := c.MustGet("db").(*gorm.DB)
 
 	if err := db.Create(&user).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
@@ -215,12 +215,12 @@ func RegisterUser(c *gin.Context) {
 		Password: input.Password,
 	}
 
-	if err := user.BeforeSave(); err != nil {
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := user.BeforeSave(db); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	db := c.MustGet("db").(*gorm.DB)
 
 	if err := db.Create(&user).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())

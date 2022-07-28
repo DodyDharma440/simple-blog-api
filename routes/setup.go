@@ -40,6 +40,15 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	categoriesRoutes.PUT("/:id", controllers.UpdateCategory)
 	categoriesRoutes.POST("/:id", controllers.DeleteCategory)
 
+	// tags
+	tagsRoutes := r.Group("/tags")
+	tagsRoutes.Use(middlewares.JwtAuth())
+	r.GET("/tags", controllers.GetTags)
+	r.GET("/tags/:id", controllers.GetTag)
+	tagsRoutes.POST("/", controllers.CreateTag)
+	tagsRoutes.PUT("/:id", controllers.UpdateTag)
+	tagsRoutes.POST("/:id", controllers.DeleteTag)
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r

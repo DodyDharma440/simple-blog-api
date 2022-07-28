@@ -23,6 +23,14 @@ func ConnectDB() *gorm.DB {
 	}
 
 	fmt.Println("Database is connected")
-	db.AutoMigrate(&models.User{}, &models.Category{})
+	db.AutoMigrate(
+		&models.User{},
+		&models.Category{},
+		&models.Article{},
+		&models.ArticleTag{},
+		&models.Tag{},
+		&models.ArticleCategory{},
+		&models.ArticleComment{},
+	)
 	return db
 }

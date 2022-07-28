@@ -26,7 +26,7 @@ func VerifyPassword(hashPw, pw string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashPw), []byte(pw))
 }
 
-func (u *User) BeforeSave() error {
+func (u *User) BeforeSave(_ *gorm.DB) error {
 	hashPw, err := Hash(u.Password)
 	if err != nil {
 		return err

@@ -12,6 +12,11 @@ definitions:
       password:
         type: string
     type: object
+  controllers.TagInput:
+    properties:
+      name:
+        type: string
+    type: object
   controllers.UserInput:
     properties:
       email:
@@ -22,6 +27,17 @@ definitions:
         type: string
     type: object
   models.Category:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Tag:
     properties:
       created_at:
         type: string
@@ -192,6 +208,102 @@ paths:
       summary: Register user.
       tags:
       - Auth
+  /tags:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Tag'
+            type: array
+      summary: Get all tags.
+      tags:
+      - Tag
+    post:
+      parameters:
+      - description: body for create tag
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.TagInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Tag.
+      tags:
+      - Tag
+  /tags/{id}:
+    delete:
+      parameters:
+      - description: tag id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Tag.
+      tags:
+      - Tag
+    get:
+      parameters:
+      - description: tag id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+      summary: Get Tag.
+      tags:
+      - Tag
+    put:
+      parameters:
+      - description: tag id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body for update tag
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.TagInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Tag.
+      tags:
+      - Tag
   /users:
     get:
       produces:
