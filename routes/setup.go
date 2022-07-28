@@ -21,6 +21,10 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	// auth
 	r.POST("/register", controllers.RegisterUser)
 	r.POST("/login", controllers.LoginUser)
+	authRoutes := r.Group("/")
+	authRoutes.Use(middlewares.JwtAuth())
+	authRoutes.PATCH("/change-password", controllers.ChangePassword)
+	authRoutes.GET("/my-profile", controllers.MyProfile)
 
 	// users
 	userRoutes := r.Group("/users")

@@ -2,6 +2,7 @@ package models
 
 import (
 	"final-project/utils"
+	"regexp"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -24,6 +25,29 @@ func Hash(password string) ([]byte, error) {
 
 func VerifyPassword(hashPw, pw string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashPw), []byte(pw))
+}
+
+func isEmailValid(e string) bool {
+	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return emailRegex.MatchString(e)
+}
+
+func (u *User) Validate(db *gorm.DB) []string {
+	errors := []string{}
+
+	if err := db.Where("email=?", u.Email).First(&u).Error; err == nil {
+		errors = append(errors, "Email sudah digunakan")
+	}
+
+	if !isEmailValid(u.Email) {
+		errors = append(errors, "Email tidak valid")
+	}
+
+	if len(u.Password) < 8 {
+		errors = append(errors, "Password harus lebih dari 8 karakter")
+	}
+
+	return errors
 }
 
 func (u *User) BeforeSave(_ *gorm.DB) error {

@@ -22,6 +22,11 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordInput struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
 // Get All Users godoc
 // @Summary     Get all users.
 // @Tags        User
@@ -86,6 +91,13 @@ func CreateUser(c *gin.Context) {
 
 	db := c.MustGet("db").(*gorm.DB)
 
+	validate := user.Validate(db)
+
+	if len(validate) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, validate)
+		return
+	}
+
 	if err := user.BeforeSave(db); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -114,6 +126,13 @@ func UpdateUser(c *gin.Context) {
 
 	if err := db.Where("id=?", c.Param("id")).First(&user).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	validate := user.Validate(db)
+
+	if len(validate) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, validate)
 		return
 	}
 
@@ -228,4 +247,78 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	utils.CreateResponse(c, http.StatusCreated, &user)
+}
+
+// Change Password User godoc
+// @Summary     Change Password user.
+// @Tags        Auth
+// @Produce     json
+// @Param Body body ChangePasswordInput true "body for change user password"
+// @Success     200 {object} models.User
+// @Router      /change-password [patch]
+// @Security ApiKeyAuth
+func ChangePassword(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var input ChangePasswordInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	u := models.User{}
+
+	if err := db.Model(models.User{}).Where("id=?", userID).Take(&u).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, err.Error())
+		return
+	}
+
+	if err := models.VerifyPassword(u.Password, input.OldPassword); err != nil {
+		utils.CreateResponse(c, http.StatusBadRequest, "Password lama tidak cocok")
+		return
+	}
+
+	var updated models.User
+	updated.Password = input.NewPassword
+	updated.BeforeSave(db)
+
+	if err := db.Model(&u).Updates(updated).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusOK, "Berhasil ganti password")
+}
+
+// Get User Profile godoc
+// @Summary     Get user profile.
+// @Tags        Auth
+// @Produce     json
+// @Success     200 {object} models.User
+// @Router      /my-profile [get]
+// @Security ApiKeyAuth
+func MyProfile(c *gin.Context) {
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var user models.User
+
+	db := c.MustGet("db").(*gorm.DB)
+	if err := db.Where("id=?", userID).First(&user).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusOK, user)
 }

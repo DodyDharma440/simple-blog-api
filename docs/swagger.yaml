@@ -5,6 +5,13 @@ definitions:
       name:
         type: string
     type: object
+  controllers.ChangePasswordInput:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
   controllers.LoginInput:
     properties:
       email:
@@ -173,6 +180,27 @@ paths:
       summary: Update Category.
       tags:
       - Category
+  /change-password:
+    patch:
+      parameters:
+      - description: body for change user password
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ChangePasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Change Password user.
+      tags:
+      - Auth
   /login:
     post:
       description: Login User.
@@ -187,6 +215,20 @@ paths:
       - application/json
       responses: {}
       summary: Login user.
+      tags:
+      - Auth
+  /my-profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user profile.
       tags:
       - Auth
   /register:
