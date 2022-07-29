@@ -3,6 +3,7 @@ package routes
 import (
 	"final-project/controllers"
 	"final-project/middlewares"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -53,7 +54,21 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	tagsRoutes.PUT("/:id", controllers.UpdateTag)
 	tagsRoutes.POST("/:id", controllers.DeleteTag)
 
+	// articles
+	articleRoutes := r.Group("/articles")
+	r.GET("/articles", controllers.GetArticles)
+	r.GET("/articles/:id", controllers.GetArticle)
+	r.GET("/articles/slug/:slug", controllers.GetArticleBySlug)
+	articleRoutes.POST("/", controllers.CreateArticle)
+	articleRoutes.PUT("/:id", controllers.UpdateArticle)
+	articleRoutes.DELETE("/:id", controllers.DeleteArticle)
+	articleRoutes.PATCH("/publish/:id", controllers.PublishArticle)
+	articleRoutes.PATCH("/unpublish/:id", controllers.UnpublishArticle)
+
+	// docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// file
+	r.StaticFS("/file", http.Dir("public"))
 	return r
 }
