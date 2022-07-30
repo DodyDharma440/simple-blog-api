@@ -12,6 +12,13 @@ definitions:
       old_password:
         type: string
     type: object
+  controllers.CommentInput:
+    properties:
+      content:
+        type: string
+      name:
+        type: string
+    type: object
   controllers.LoginInput:
     properties:
       email:
@@ -81,6 +88,23 @@ definitions:
       updated_at:
         type: string
     type: object
+  models.ArticleComment:
+    properties:
+      article_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_reply:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   models.ArticleTag:
     properties:
       article_id:
@@ -104,6 +128,27 @@ definitions:
         type: integer
       name:
         type: string
+      updated_at:
+        type: string
+    type: object
+  models.ReplyArticleComment:
+    properties:
+      article_id:
+        type: integer
+      comment_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent:
+        $ref: '#/definitions/models.ArticleComment'
+      parent_id:
+        type: integer
       updated_at:
         type: string
     type: object
@@ -161,6 +206,47 @@ paths:
       summary: Get all articles.
       tags:
       - Article
+    post:
+      parameters:
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: 'tags tags id (ex: 1,2,3)'
+        in: formData
+        name: tag_ids
+        type: string
+      - description: 'categories id (ex: 1,2,3)'
+        in: formData
+        name: category_ids
+        type: string
+      - description: image
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Article'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Article.
+      tags:
+      - Article
   /articles/{id}:
     delete:
       parameters:
@@ -196,6 +282,158 @@ paths:
           schema:
             $ref: '#/definitions/models.Article'
       summary: Get article by id.
+      tags:
+      - Article
+    post:
+      parameters:
+      - description: article id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: 'tags tags id (ex: 1,2,3)'
+        in: formData
+        name: tag_ids
+        type: string
+      - description: 'categories id (ex: 1,2,3)'
+        in: formData
+        name: category_ids
+        type: string
+      - description: image
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Article'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Article.
+      tags:
+      - Article
+  /articles/{id}/comments:
+    get:
+      parameters:
+      - description: article id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ArticleComment'
+            type: array
+      summary: Get Comments by Article ID.
+      tags:
+      - Article
+    post:
+      parameters:
+      - description: article id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body for create user
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CommentInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ArticleComment'
+      summary: Create Comment.
+      tags:
+      - Article
+  /articles/comments/{id}:
+    delete:
+      parameters:
+      - description: comment id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Comment.
+      tags:
+      - Article
+  /articles/comments/{id}/replies:
+    get:
+      parameters:
+      - description: article id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ReplyArticleComment'
+            type: array
+      summary: Get Comments by Article ID.
+      tags:
+      - Article
+    post:
+      parameters:
+      - description: comment id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: body for create user
+        in: body
+        name: Body
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CommentInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ReplyArticleComment'
+      summary: Create Reply Comment.
       tags:
       - Article
   /articles/publish/{id}:

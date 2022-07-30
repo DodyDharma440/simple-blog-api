@@ -26,8 +26,8 @@ func SliceStringToUInt(data []string) []uint {
 	return ids
 }
 
-func UploadFile(c *gin.Context, folder string) (string, error) {
-	file, header, err := c.Request.FormFile("image")
+func UploadFile(c *gin.Context, folder string, name string) (string, error) {
+	file, header, err := c.Request.FormFile(name)
 
 	if err != nil {
 		return "", err

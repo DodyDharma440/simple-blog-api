@@ -15,12 +15,16 @@ import (
 )
 
 type ArticleInput struct {
-	Title       string      `json:"title"`
-	Content     string      `json:"content"`
-	Image       interface{} `json:"image"`
-	Description string      `json:"description"`
-	Tags        []uint      `json:"tag_ids"`
-	Categories  []uint      `json:"category_ids"`
+	Title       string `json:"title"`
+	Content     string `json:"content"`
+	Description string `json:"description"`
+	Tags        string `json:"tag_ids"`
+	Categories  string `json:"category_ids"`
+}
+
+type CommentInput struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 // Get All Articles godoc
@@ -92,28 +96,41 @@ func GetArticleBySlug(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, article)
 }
 
+// Create Article godoc
+// @Summary     Create Article.
+// @Tags        Article
+// @Produce     json
+// @Accept multipart/form-data
+// @Param title formData string true "title"
+// @Param content formData string true "content"
+// @Param description formData string true "description"
+// @Param tag_ids formData string false "tags tags id (ex: 1,2,3)"
+// @Param category_ids formData string false "categories id (ex: 1,2,3)"
+// @Param image formData file false "image"
+// @Success     201 {object} models.Article
+// @Router      /articles [post]
+// @Security ApiKeyAuth
 func CreateArticle(c *gin.Context) {
 	var errs = []string{}
-
-	filepath, err := utils.UploadFile(c, "articles")
-
-	if err != nil {
-		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
-		return
-	}
 
 	db := c.MustGet("db").(*gorm.DB)
 
 	article := models.Article{
 		Title:       c.PostForm("title"),
 		Content:     c.PostForm("content"),
-		ImagePath:   filepath,
 		Description: c.PostForm("description"),
 		IsPublished: false,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
+	filepath, err := utils.UploadFile(c, "articles", "image")
+
+	if err != nil {
+		fmt.Println("Upload failed")
+	} else {
+		article.ImagePath = filepath
+	}
 	userID, err := utils.ExtractTokenID(c)
 
 	if err != nil {
@@ -146,10 +163,84 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
-	utils.CreateResponse(c, http.StatusCreated, article)
+	article.GetDetails(db)
+	utils.CreateResponse(c, http.StatusCreated, &article)
 }
 
-func UpdateArticle(c *gin.Context) {}
+// Update Article godoc
+// @Summary     Update Article.
+// @Tags        Article
+// @Accept multipart/form-data
+// @Produce     json
+// @Param id path string true "article id"
+// @Param title formData string true "title"
+// @Param content formData string true "content"
+// @Param description formData string true "description"
+// @Param tag_ids formData string false "tags tags id (ex: 1,2,3)"
+// @Param category_ids formData string false "categories id (ex: 1,2,3)"
+// @Param image formData file false "image"
+// @Success     200 {object} models.Article
+// @Router      /articles/{id} [post]
+// @Security ApiKeyAuth
+func UpdateArticle(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+
+	article := models.Article{}
+
+	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	var errs = []string{}
+
+	updated := models.Article{
+		Title:       c.PostForm("title"),
+		Content:     c.PostForm("content"),
+		Description: c.PostForm("description"),
+		UpdatedAt:   time.Now(),
+	}
+
+	filepath, err := utils.UploadFile(c, "articles", "image")
+
+	if err != nil {
+		fmt.Println("Upload failed")
+	} else {
+		updated.ImagePath = filepath
+	}
+
+	article.GetSlug(db)
+
+	if err := article.BeforeUpdate(db); err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	categories := strings.Split(c.PostForm("category_ids"), ",")
+	tags := strings.Split(c.PostForm("tag_ids"), ",")
+
+	category_ids := utils.SliceStringToUInt(categories)
+	tag_ids := utils.SliceStringToUInt(tags)
+
+	errs = append(errs, article.InsertCategories(db, category_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids)...)
+
+	if len(errs) > 0 {
+		if err := article.Delete(db); err != nil {
+			fmt.Println(err.Error())
+		}
+		utils.CreateResponse(c, http.StatusBadRequest, errs)
+		return
+	}
+
+	if err := db.Model(&article).Updates(updated).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusCreated, article)
+
+}
 
 // Delete Article godoc
 // @Summary     Delete article.
@@ -243,4 +334,177 @@ func UnpublishArticle(c *gin.Context) {
 	}
 
 	utils.CreateResponse(c, http.StatusOK, &article)
+}
+
+// Get Comments by Article ID godoc
+// @Summary     Get Comments by Article ID.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "article id"
+// @Success     200 {object} []models.ArticleComment
+// @Router      /articles/{id}/comments [get]
+func GetComments(c *gin.Context) {
+	var comments []models.ArticleComment
+
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := db.Where("article_id=? AND is_reply=false", c.Param("id")).Find(&comments).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusOK, &comments)
+}
+
+// Create Comment godoc
+// @Summary     Create Comment.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "article id"
+// @Param Body body CommentInput true "body for create user"
+// @Success     200 {object} models.ArticleComment
+// @Router      /articles/{id}/comments [post]
+func CreateComment(c *gin.Context) {
+	var input CommentInput
+	var article models.Article
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	comment := models.ArticleComment{
+		Name:      input.Name,
+		Content:   input.Content,
+		ArticleID: article.ID,
+		IsReply:   false,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := db.Create(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusCreated, &comment)
+}
+
+// Delete Comment godoc
+// @Summary     Delete Comment.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "comment id"
+// @Success     200 {object} bool
+// @Router      /articles/comments/{id} [delete]
+// @Security ApiKeyAuth
+func DeleteComment(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+	var comment models.ArticleComment
+
+	if err := db.Where("id=?", c.Param("id")).First(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	if err := db.Delete(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusOK, true)
+}
+
+// Get Comments by Article ID godoc
+// @Summary     Get Comments by Article ID.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "article id"
+// @Success     200 {object} []models.ReplyArticleComment
+// @Router      /articles/comments/{id}/replies [get]
+func GetReplyComments(c *gin.Context) {
+	var comments []models.ReplyArticleComment
+
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := db.Where("parent_id=?", c.Param("id")).Find(&comments).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	_comments := []models.ReplyArticleComment{}
+
+	for _, comment := range comments {
+		if err := comment.GetParent(db); err != nil {
+			utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		_comments = append(_comments, comment)
+	}
+
+	utils.CreateResponse(c, http.StatusOK, &_comments)
+}
+
+// Create Reply Comment godoc
+// @Summary     Create Reply Comment.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "comment id"
+// @Param Body body CommentInput true "body for create user"
+// @Success     200 {object} models.ReplyArticleComment
+// @Router      /articles/comments/{id}/replies [post]
+func CreateReplyComment(c *gin.Context) {
+	var input CommentInput
+	var parent models.ArticleComment
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	db := c.MustGet("db").(*gorm.DB)
+
+	if err := db.Where("id=?", c.Param("id")).First(&parent).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	comment := models.ArticleComment{
+		Name:      input.Name,
+		Content:   input.Content,
+		ArticleID: parent.ArticleID,
+		IsReply:   true,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := db.Create(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	replyComment := models.ReplyArticleComment{
+		Name:      input.Name,
+		Content:   input.Content,
+		ArticleID: parent.ArticleID,
+		ParentID:  parent.ID,
+		CommentID: comment.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := db.Create(&replyComment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusCreated, &comment)
 }

@@ -64,6 +64,11 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	articleRoutes.DELETE("/:id", controllers.DeleteArticle)
 	articleRoutes.PATCH("/publish/:id", controllers.PublishArticle)
 	articleRoutes.PATCH("/unpublish/:id", controllers.UnpublishArticle)
+	r.GET("/articles/:id/comments", controllers.GetComments)
+	r.POST("/articles/:id/comments", controllers.CreateComment)
+	articleRoutes.DELETE("/comments/:id", controllers.DeleteComment)
+	r.POST("/articles/comments/:id/replies", controllers.CreateReplyComment)
+	r.GET("/articles/comments/:id/replies", controllers.GetReplyComments)
 
 	// docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -34,6 +34,7 @@ func ConnectDB() *gorm.DB {
 		&models.Tag{},
 		&models.ArticleCategory{},
 		&models.ArticleComment{},
+		&models.ReplyArticleComment{},
 	)
 	return db
 }

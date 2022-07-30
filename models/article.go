@@ -65,6 +65,21 @@ func (a *Article) Delete(db *gorm.DB) error {
 	return nil
 }
 
+func (a *Article) BeforeUpdate(db *gorm.DB) error {
+	var category ArticleCategory
+	var tag ArticleTag
+
+	if err := db.Where("article_id=?", a.ID).Delete(&category).Error; err != nil {
+		return err
+	}
+
+	if err := db.Where("article_id=?", a.ID).Delete(&tag).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *Article) InsertCategories(db *gorm.DB, ids []uint) []string {
 	errs := []string{}
 
@@ -159,12 +174,36 @@ type ArticleCategory struct {
 
 type ArticleComment struct {
 	ID        uint      `gorm:"primary_key;auto_increment" json:"id"`
-	UserID    uint      `json:"user_id"`
+	Name      string    `gorm:"size:100" json:"name"`
 	ArticleID uint      `json:"article_id"`
-	CommentID uint      `gorm:"default:null;" json:"comment_id"`
 	Content   string    `json:"content"`
+	IsReply   bool      `json:"is_reply"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	User      User      `json:"-"`
 	Article   Article   `json:"-"`
+	// Replies   []ReplyArticleComment `json:"replies"`
+}
+
+type ReplyArticleComment struct {
+	ID        uint           `gorm:"primary_key;auto_increment" json:"id"`
+	Name      string         `gorm:"size:100" json:"name"`
+	ArticleID uint           `json:"article_id"`
+	ParentID  uint           `json:"parent_id"`
+	CommentID uint           `gorm:"default:null" json:"comment_id"`
+	Content   string         `json:"content"`
+	CreatedAt time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
+	Article   Article        `json:"-"`
+	Parent    ArticleComment `json:"parent"`
+}
+
+func (r *ReplyArticleComment) GetParent(db *gorm.DB) error {
+	var parent ArticleComment
+
+	if err := db.Where("id=?", r.ParentID).First(&parent).Error; err != nil {
+		return err
+	}
+	r.Parent = parent
+
+	return nil
 }
