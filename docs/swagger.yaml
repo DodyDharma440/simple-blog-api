@@ -207,6 +207,8 @@ paths:
       tags:
       - Article
     post:
+      consumes:
+      - multipart/form-data
       parameters:
       - description: title
         in: formData
@@ -285,6 +287,8 @@ paths:
       tags:
       - Article
     post:
+      consumes:
+      - multipart/form-data
       parameters:
       - description: article id
         in: path

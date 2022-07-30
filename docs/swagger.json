@@ -45,6 +45,9 @@
                         "ApiKeyAuth": []
                     }
                 ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -328,6 +331,9 @@
                     {
                         "ApiKeyAuth": []
                     }
+                ],
+                "consumes": [
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"

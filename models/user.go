@@ -2,6 +2,7 @@ package models
 
 import (
 	"final-project/utils"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -20,6 +21,7 @@ type User struct {
 }
 
 func Hash(password string) ([]byte, error) {
+	fmt.Println("jln")
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
@@ -50,12 +52,14 @@ func (u *User) Validate(db *gorm.DB) []string {
 	return errors
 }
 
-func (u *User) BeforeSave(_ *gorm.DB) error {
-	hashPw, err := Hash(u.Password)
-	if err != nil {
-		return err
+func (u *User) BeforeSave(_ *gorm.DB, inputPw string) error {
+	if u.Password == inputPw {
+		hashPw, err := Hash(u.Password)
+		if err != nil {
+			return err
+		}
+		u.Password = string(hashPw)
 	}
-	u.Password = string(hashPw)
 	return nil
 }
 

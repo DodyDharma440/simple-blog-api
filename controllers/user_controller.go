@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"final-project/models"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -98,7 +99,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := user.BeforeSave(db); err != nil {
+	if err := user.BeforeSave(db, input.Password); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -236,7 +237,14 @@ func RegisterUser(c *gin.Context) {
 
 	db := c.MustGet("db").(*gorm.DB)
 
-	if err := user.BeforeSave(db); err != nil {
+	validate := user.Validate(db)
+
+	if len(validate) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, validate)
+		return
+	}
+
+	if err := user.BeforeSave(db, input.Password); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -245,6 +253,9 @@ func RegisterUser(c *gin.Context) {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	fmt.Println("User => ", user)
+	// fmt.Println("Is Match => ", user.Password == )
 
 	utils.CreateResponse(c, http.StatusCreated, &user)
 }
@@ -287,7 +298,7 @@ func ChangePassword(c *gin.Context) {
 
 	var updated models.User
 	updated.Password = input.NewPassword
-	updated.BeforeSave(db)
+	updated.BeforeSave(db, input.NewPassword)
 
 	if err := db.Model(&u).Updates(updated).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
