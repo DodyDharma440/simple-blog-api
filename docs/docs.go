@@ -842,6 +842,9 @@ const docTemplate = `{
         "models.Article": {
             "type": "object",
             "properties": {
+                "author": {
+                    "$ref": "#/definitions/models.User"
+                },
                 "categories": {
                     "type": "array",
                     "items": {
@@ -880,6 +883,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

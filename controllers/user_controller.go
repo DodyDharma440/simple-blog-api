@@ -206,7 +206,7 @@ func LoginUser(c *gin.Context) {
 	token, err := u.LoginCheck(db)
 
 	if err != nil {
-		utils.CreateResponse(c, http.StatusBadRequest, "email atau password salah")
+		utils.CreateResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

@@ -4,7 +4,6 @@ import (
 	"final-project/models"
 	"final-project/utils"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -96,26 +95,12 @@ func GetArticleBySlug(c *gin.Context) {
 func CreateArticle(c *gin.Context) {
 	var errs = []string{}
 
-	file, header, err := c.Request.FormFile("image")
+	filepath, err := utils.UploadFile(c, "articles")
 
 	if err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	fileName := header.Filename
-	out, err := os.Create("public/upload/articles/" + fileName)
-	defer out.Close()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = io.Copy(out, file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	filepath := "/file/upload/articles/" + fileName
 
 	db := c.MustGet("db").(*gorm.DB)
 
@@ -129,7 +114,15 @@ func CreateArticle(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	}
 
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	article.GetSlug(db)
+	article.UserID = userID
 
 	if err := db.Create(&article).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
@@ -178,8 +171,7 @@ func DeleteArticle(c *gin.Context) {
 	filePathSlice := strings.Split(article.ImagePath, "/")
 	fileName := filePathSlice[len(filePathSlice)-1]
 
-	out, err := os.Create("public/upload/articles/" + fileName)
-	defer out.Close()
+	err := os.Remove("public/upload/articles/" + fileName)
 
 	if err != nil {
 		log.Fatal(err)

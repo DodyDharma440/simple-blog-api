@@ -35,6 +35,8 @@ definitions:
     type: object
   models.Article:
     properties:
+      author:
+        $ref: '#/definitions/models.User'
       categories:
         items:
           $ref: '#/definitions/models.ArticleCategory'
@@ -61,6 +63,8 @@ definitions:
         type: string
       updated_at:
         type: string
+      user_id:
+        type: integer
     type: object
   models.ArticleCategory:
     properties:

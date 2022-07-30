@@ -25,11 +25,13 @@ type Article struct {
 	Content     string            `gorm:"not null" json:"content"`
 	Description string            `gorm:"size:255;not null" json:"description"`
 	IsPublished bool              `gorm:"not null" json:"is_published"`
+	UserID      uint              `json:"user_id"`
 	CreatedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 	Tags        []ArticleTag      `json:"tags"`
 	Categories  []ArticleCategory `json:"categories"`
 	Comments    []ArticleComment  `json:"-"`
+	User        User              `json:"author"`
 }
 
 func (a *Article) GetSlug(_ *gorm.DB) {
@@ -119,6 +121,7 @@ func (a *Article) GetDetails(db *gorm.DB) {
 
 	db.Where("article_id=?", a.ID).Find(&a.Categories)
 	db.Where("article_id=?", a.ID).Find(&a.Tags)
+	db.Where("id=?", a.UserID).First(&a.User)
 
 	for _, category := range a.Categories {
 		db.Where("id = ?", category.CategoryID).First(&category.Category)
