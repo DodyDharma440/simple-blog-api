@@ -5,7 +5,7 @@ import (
 	"final-project/docs"
 	"final-project/routes"
 	"final-project/utils"
-	"log"
+	"fmt"
 
 	_ "final-project/docs"
 
@@ -32,9 +32,10 @@ import (
 // @name Authorization
 
 func main() {
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal(err.Error())
+		// log.Fatal(err.Error())
+		fmt.Println(err.Error())
 	}
 
 	// programmatically set swagger info
