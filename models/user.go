@@ -10,12 +10,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// User
+type UserRole string
+
+const (
+	ADMIN UserRole = "admin"
+	USER  UserRole = "user"
+)
+
 type User struct {
 	ID        uint      `gorm:"primary_key;auto_increment" json:"id"`
 	Name      string    `gorm:"size:255;not null" json:"name"`
 	Email     string    `gorm:"size:100;not null;unique" json:"email"`
 	Password  string    `gorm:"size:100;not null" json:"password"`
+	Role      UserRole  `sql:"type:ENUM('admin', 'user')" json:"role"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
@@ -47,6 +54,10 @@ func (u *User) Validate(db *gorm.DB) []string {
 
 	if len(u.Password) < 8 {
 		errors = append(errors, "Password harus lebih dari 8 karakter")
+	}
+
+	if u.Role != "admin" && u.Role != "user" {
+		errors = append(errors, "Role harus 'admin' atau 'user'")
 	}
 
 	return errors

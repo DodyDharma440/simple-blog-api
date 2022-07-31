@@ -147,11 +147,11 @@
                 "tags": [
                     "Article"
                 ],
-                "summary": "Get Comments by Article ID.",
+                "summary": "Get Reply Comments by Comment ID.",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "article id",
+                        "description": "comment id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -170,6 +170,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -186,7 +191,7 @@
                         "required": true
                     },
                     {
-                        "description": "body for create user",
+                        "description": "body for create reply comment",
                         "name": "Body",
                         "in": "body",
                         "required": true,
@@ -462,6 +467,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1108,9 +1118,6 @@
             "properties": {
                 "content": {
                     "type": "string"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
@@ -1143,6 +1150,9 @@
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 }
             }
@@ -1238,11 +1248,14 @@
                 "is_reply": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "updated_at": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1304,9 +1317,6 @@
                 "id": {
                     "type": "integer"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "parent": {
                     "$ref": "#/definitions/models.ArticleComment"
                 },
@@ -1315,6 +1325,12 @@
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1351,6 +1367,9 @@
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "updated_at": {

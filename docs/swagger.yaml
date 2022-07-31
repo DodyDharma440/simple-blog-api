@@ -16,8 +16,6 @@ definitions:
     properties:
       content:
         type: string
-      name:
-        type: string
     type: object
   controllers.LoginInput:
     properties:
@@ -38,6 +36,8 @@ definitions:
       name:
         type: string
       password:
+        type: string
+      role:
         type: string
     type: object
   models.Article:
@@ -100,10 +100,12 @@ definitions:
         type: integer
       is_reply:
         type: boolean
-      name:
-        type: string
       updated_at:
         type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
     type: object
   models.ArticleTag:
     properties:
@@ -143,14 +145,16 @@ definitions:
         type: string
       id:
         type: integer
-      name:
-        type: string
       parent:
         $ref: '#/definitions/models.ArticleComment'
       parent_id:
         type: integer
       updated_at:
         type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
     type: object
   models.Tag:
     properties:
@@ -174,6 +178,8 @@ definitions:
       name:
         type: string
       password:
+        type: string
+      role:
         type: string
       updated_at:
         type: string
@@ -374,6 +380,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.ArticleComment'
+      security:
+      - ApiKeyAuth: []
       summary: Create Comment.
       tags:
       - Article
@@ -400,7 +408,7 @@ paths:
   /articles/comments/{id}/replies:
     get:
       parameters:
-      - description: article id
+      - description: comment id
         in: path
         name: id
         required: true
@@ -414,7 +422,7 @@ paths:
             items:
               $ref: '#/definitions/models.ReplyArticleComment'
             type: array
-      summary: Get Comments by Article ID.
+      summary: Get Reply Comments by Comment ID.
       tags:
       - Article
     post:
@@ -424,7 +432,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: body for create user
+      - description: body for create reply comment
         in: body
         name: Body
         required: true
@@ -437,6 +445,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.ReplyArticleComment'
+      security:
+      - ApiKeyAuth: []
       summary: Create Reply Comment.
       tags:
       - Article

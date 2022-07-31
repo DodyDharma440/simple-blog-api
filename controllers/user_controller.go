@@ -13,9 +13,10 @@ import (
 )
 
 type UserInput struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name     string          `json:"name"`
+	Email    string          `json:"email"`
+	Password string          `json:"password"`
+	Role     models.UserRole `json:"role"`
 }
 
 type LoginInput struct {
@@ -88,6 +89,7 @@ func CreateUser(c *gin.Context) {
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,
+		Role:     input.Role,
 	}
 
 	db := c.MustGet("db").(*gorm.DB)
@@ -148,6 +150,7 @@ func UpdateUser(c *gin.Context) {
 
 	updated.Name = input.Name
 	updated.Email = input.Email
+	updated.Role = input.Role
 	updated.UpdatedAt = time.Now()
 
 	if err := db.Model(&user).Updates(updated).Error; err != nil {
@@ -233,6 +236,7 @@ func RegisterUser(c *gin.Context) {
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,
+		Role:     input.Role,
 	}
 
 	db := c.MustGet("db").(*gorm.DB)
@@ -298,7 +302,11 @@ func ChangePassword(c *gin.Context) {
 
 	var updated models.User
 	updated.Password = input.NewPassword
-	updated.BeforeSave(db, input.NewPassword)
+
+	if err := updated.BeforeSave(db, input.NewPassword); err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	if err := db.Model(&u).Updates(updated).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())

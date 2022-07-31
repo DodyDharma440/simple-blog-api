@@ -28,9 +28,9 @@ type Article struct {
 	UserID      uint              `json:"user_id"`
 	CreatedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	Tags        []ArticleTag      `json:"tags"`
-	Categories  []ArticleCategory `json:"categories"`
-	Comments    []ArticleComment  `json:"-"`
+	Tags        []ArticleTag      `gorm:"many2many" json:"tags"`
+	Categories  []ArticleCategory `gorm:"many2many" json:"categories"`
+	Comments    []ArticleComment  `gorm:"many2many" json:"-"`
 	User        User              `json:"author"`
 }
 
@@ -174,19 +174,31 @@ type ArticleCategory struct {
 
 type ArticleComment struct {
 	ID        uint      `gorm:"primary_key;auto_increment" json:"id"`
-	Name      string    `gorm:"size:100" json:"name"`
+	UserID    uint      `json:"user_id"`
 	ArticleID uint      `json:"article_id"`
 	Content   string    `json:"content"`
 	IsReply   bool      `json:"is_reply"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 	Article   Article   `json:"-"`
+	User      User      `json:"user"`
 	// Replies   []ReplyArticleComment `json:"replies"`
+}
+
+func (co *ArticleComment) GetDetails(db *gorm.DB) error {
+	user := User{}
+
+	if err := db.Where("id=?", co.UserID).First(&user).Error; err != nil {
+		return err
+	}
+
+	co.User = user
+	return nil
 }
 
 type ReplyArticleComment struct {
 	ID        uint           `gorm:"primary_key;auto_increment" json:"id"`
-	Name      string         `gorm:"size:100" json:"name"`
+	UserID    uint           `json:"user_id"`
 	ArticleID uint           `json:"article_id"`
 	ParentID  uint           `json:"parent_id"`
 	CommentID uint           `gorm:"default:null" json:"comment_id"`
@@ -195,6 +207,7 @@ type ReplyArticleComment struct {
 	UpdatedAt time.Time      `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 	Article   Article        `json:"-"`
 	Parent    ArticleComment `json:"parent"`
+	User      User           `json:"user"`
 }
 
 func (r *ReplyArticleComment) GetParent(db *gorm.DB) error {
@@ -205,5 +218,16 @@ func (r *ReplyArticleComment) GetParent(db *gorm.DB) error {
 	}
 	r.Parent = parent
 
+	return nil
+}
+
+func (co *ReplyArticleComment) GetDetails(db *gorm.DB) error {
+	user := User{}
+
+	if err := db.Where("id=?", co.UserID).First(&user).Error; err != nil {
+		return err
+	}
+
+	co.User = user
 	return nil
 }

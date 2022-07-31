@@ -154,11 +154,11 @@ const docTemplate = `{
                 "tags": [
                     "Article"
                 ],
-                "summary": "Get Comments by Article ID.",
+                "summary": "Get Reply Comments by Comment ID.",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "article id",
+                        "description": "comment id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -177,6 +177,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -193,7 +198,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "body for create user",
+                        "description": "body for create reply comment",
                         "name": "Body",
                         "in": "body",
                         "required": true,
@@ -469,6 +474,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1115,9 +1125,6 @@ const docTemplate = `{
             "properties": {
                 "content": {
                     "type": "string"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
@@ -1150,6 +1157,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 }
             }
@@ -1245,11 +1255,14 @@ const docTemplate = `{
                 "is_reply": {
                     "type": "boolean"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "updated_at": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1311,9 +1324,6 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "name": {
-                    "type": "string"
-                },
                 "parent": {
                     "$ref": "#/definitions/models.ArticleComment"
                 },
@@ -1322,6 +1332,12 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1358,6 +1374,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "updated_at": {

@@ -23,7 +23,6 @@ type ArticleInput struct {
 }
 
 type CommentInput struct {
-	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
@@ -239,7 +238,6 @@ func UpdateArticle(c *gin.Context) {
 	}
 
 	utils.CreateResponse(c, http.StatusCreated, article)
-
 }
 
 // Delete Article godoc
@@ -287,19 +285,40 @@ func DeleteArticle(c *gin.Context) {
 func PublishArticle(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var article models.Article
+	var details models.Article
 
-	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
+	if err := db.Where("id=?", c.Param("id")).First(&article).First(&details).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
 		return
 	}
 
-	updated := models.Article{
-		IsPublished: true,
-		UpdatedAt:   time.Now(),
+	details.GetDetails(db)
+
+	category_ids := []uint{}
+	for _, c := range details.Categories {
+		category_ids = append(category_ids, c.CategoryID)
 	}
 
-	if err := db.Model(&article).Updates(updated).Error; err != nil {
+	tag_ids := []uint{}
+	for _, t := range details.Tags {
+		tag_ids = append(tag_ids, t.TagID)
+	}
+
+	if err := db.Model(&article).Update("is_published", true).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var errs = []string{}
+
+	errs = append(errs, article.InsertCategories(db, category_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids)...)
+
+	if len(errs) > 0 {
+		if err := article.Delete(db); err != nil {
+			fmt.Println(err.Error())
+		}
+		utils.CreateResponse(c, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -317,19 +336,40 @@ func PublishArticle(c *gin.Context) {
 func UnpublishArticle(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var article models.Article
+	var details models.Article
 
-	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
+	if err := db.Where("id=?", c.Param("id")).First(&article).First(&details).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
 		return
 	}
 
-	updated := models.Article{
-		IsPublished: false,
-		UpdatedAt:   time.Now(),
+	details.GetDetails(db)
+
+	category_ids := []uint{}
+	for _, c := range details.Categories {
+		category_ids = append(category_ids, c.CategoryID)
 	}
 
-	if err := db.Model(&article).Updates(updated).Error; err != nil {
+	tag_ids := []uint{}
+	for _, t := range details.Tags {
+		tag_ids = append(tag_ids, t.TagID)
+	}
+
+	if err := db.Model(&article).Update("is_published", false).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var errs = []string{}
+
+	errs = append(errs, article.InsertCategories(db, category_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids)...)
+
+	if len(errs) > 0 {
+		if err := article.Delete(db); err != nil {
+			fmt.Println(err.Error())
+		}
+		utils.CreateResponse(c, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -353,7 +393,18 @@ func GetComments(c *gin.Context) {
 		return
 	}
 
-	utils.CreateResponse(c, http.StatusOK, &comments)
+	_comments := []models.ArticleComment{}
+
+	for _, comment := range comments {
+		if err := comment.GetDetails(db); err != nil {
+			utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		_comments = append(_comments, comment)
+	}
+
+	utils.CreateResponse(c, http.StatusOK, &_comments)
 }
 
 // Create Comment godoc
@@ -364,9 +415,17 @@ func GetComments(c *gin.Context) {
 // @Param Body body CommentInput true "body for create user"
 // @Success     200 {object} models.ArticleComment
 // @Router      /articles/{id}/comments [post]
+// @Security ApiKeyAuth
 func CreateComment(c *gin.Context) {
 	var input CommentInput
 	var article models.Article
+
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
@@ -381,9 +440,9 @@ func CreateComment(c *gin.Context) {
 	}
 
 	comment := models.ArticleComment{
-		Name:      input.Name,
 		Content:   input.Content,
 		ArticleID: article.ID,
+		UserID:    userID,
 		IsReply:   false,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -409,8 +468,20 @@ func DeleteComment(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var comment models.ArticleComment
 
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	if err := db.Where("id=?", c.Param("id")).First(&comment).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	if userID != comment.UserID {
+		utils.CreateResponse(c, http.StatusBadRequest, "hanya pembuat komentar yang dapat menghapus komentar")
 		return
 	}
 
@@ -422,11 +493,11 @@ func DeleteComment(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, true)
 }
 
-// Get Comments by Article ID godoc
-// @Summary     Get Comments by Article ID.
+// Get Comments by Comment ID godoc
+// @Summary     Get Reply Comments by Comment ID.
 // @Tags        Article
 // @Produce     json
-// @Param id path string true "article id"
+// @Param id path string true "comment id"
 // @Success     200 {object} []models.ReplyArticleComment
 // @Router      /articles/comments/{id}/replies [get]
 func GetReplyComments(c *gin.Context) {
@@ -447,6 +518,11 @@ func GetReplyComments(c *gin.Context) {
 			return
 		}
 
+		if err := comment.GetDetails(db); err != nil {
+			utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		_comments = append(_comments, comment)
 	}
 
@@ -458,12 +534,20 @@ func GetReplyComments(c *gin.Context) {
 // @Tags        Article
 // @Produce     json
 // @Param id path string true "comment id"
-// @Param Body body CommentInput true "body for create user"
+// @Param Body body CommentInput true "body for create reply comment"
 // @Success     200 {object} models.ReplyArticleComment
 // @Router      /articles/comments/{id}/replies [post]
+// @Security ApiKeyAuth
 func CreateReplyComment(c *gin.Context) {
 	var input CommentInput
 	var parent models.ArticleComment
+
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
@@ -478,9 +562,9 @@ func CreateReplyComment(c *gin.Context) {
 	}
 
 	comment := models.ArticleComment{
-		Name:      input.Name,
 		Content:   input.Content,
 		ArticleID: parent.ArticleID,
+		UserID:    userID,
 		IsReply:   true,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -492,10 +576,10 @@ func CreateReplyComment(c *gin.Context) {
 	}
 
 	replyComment := models.ReplyArticleComment{
-		Name:      input.Name,
 		Content:   input.Content,
 		ArticleID: parent.ArticleID,
 		ParentID:  parent.ID,
+		UserID:    userID,
 		CommentID: comment.ID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

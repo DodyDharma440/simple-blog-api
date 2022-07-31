@@ -7,5 +7,5 @@ type Tag struct {
 	Name      string    `gorm:"size:100;not null;unique" json:"name"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
-	// Article   []Article `json:"-"`
+	Article   []Article `gorm:"many2many" json:"-"`
 }

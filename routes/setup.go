@@ -29,7 +29,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// users
 	userRoutes := r.Group("/users")
-	userRoutes.Use(middlewares.JwtAuth())
+	userRoutes.Use(middlewares.JwtAuth(), middlewares.AdminOnly())
 	userRoutes.GET("/", controllers.GetUsers)
 	userRoutes.GET("/:id", controllers.GetUser)
 	userRoutes.POST("/", controllers.CreateUser)
@@ -38,7 +38,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// categories
 	categoriesRoutes := r.Group("/categories")
-	categoriesRoutes.Use(middlewares.JwtAuth())
+	categoriesRoutes.Use(middlewares.JwtAuth(), middlewares.AdminOnly())
 	r.GET("/categories", controllers.GetCategories)
 	r.GET("/categories/:id", controllers.GetCategory)
 	categoriesRoutes.POST("/", controllers.CreateCategory)
@@ -47,7 +47,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// tags
 	tagsRoutes := r.Group("/tags")
-	tagsRoutes.Use(middlewares.JwtAuth())
+	tagsRoutes.Use(middlewares.JwtAuth(), middlewares.AdminOnly())
 	r.GET("/tags", controllers.GetTags)
 	r.GET("/tags/:id", controllers.GetTag)
 	tagsRoutes.POST("/", controllers.CreateTag)
@@ -56,6 +56,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	// articles
 	articleRoutes := r.Group("/articles")
+	articleRoutes.Use(middlewares.JwtAuth(), middlewares.AdminOnly())
 	r.GET("/articles", controllers.GetArticles)
 	r.GET("/articles/:id", controllers.GetArticle)
 	r.GET("/articles/slug/:slug", controllers.GetArticleBySlug)
@@ -64,11 +65,14 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	articleRoutes.DELETE("/:id", controllers.DeleteArticle)
 	articleRoutes.PATCH("/publish/:id", controllers.PublishArticle)
 	articleRoutes.PATCH("/unpublish/:id", controllers.UnpublishArticle)
+
+	commentRoutes := r.Group("/articles")
+	commentRoutes.Use(middlewares.JwtAuth())
 	r.GET("/articles/:id/comments", controllers.GetComments)
-	r.POST("/articles/:id/comments", controllers.CreateComment)
-	articleRoutes.DELETE("/comments/:id", controllers.DeleteComment)
-	r.POST("/articles/comments/:id/replies", controllers.CreateReplyComment)
 	r.GET("/articles/comments/:id/replies", controllers.GetReplyComments)
+	commentRoutes.POST("/:id/comments", controllers.CreateComment)
+	commentRoutes.DELETE("/comments/:id", controllers.DeleteComment)
+	commentRoutes.POST("/comments/:id/replies", controllers.CreateReplyComment)
 
 	// docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
