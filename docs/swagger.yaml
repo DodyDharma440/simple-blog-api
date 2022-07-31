@@ -1,5 +1,20 @@
 basePath: /
 definitions:
+  controllers.ArticleInput:
+    properties:
+      category_ids:
+        type: string
+      content:
+        type: string
+      description:
+        type: string
+      image_url:
+        type: string
+      tag_ids:
+        type: string
+      title:
+        type: string
+    type: object
   controllers.CategoryInput:
     properties:
       name:
@@ -56,7 +71,7 @@ definitions:
         type: string
       id:
         type: integer
-      image_path:
+      image_url:
         type: string
       is_published:
         type: boolean
@@ -213,36 +228,13 @@ paths:
       tags:
       - Article
     post:
-      consumes:
-      - multipart/form-data
       parameters:
-      - description: title
-        in: formData
-        name: title
+      - description: 'body for create article (example ids input: ''1,2,3'')'
+        in: body
+        name: Body
         required: true
-        type: string
-      - description: content
-        in: formData
-        name: content
-        required: true
-        type: string
-      - description: description
-        in: formData
-        name: description
-        required: true
-        type: string
-      - description: 'tags tags id (ex: 1,2,3)'
-        in: formData
-        name: tag_ids
-        type: string
-      - description: 'categories id (ex: 1,2,3)'
-        in: formData
-        name: category_ids
-        type: string
-      - description: image
-        in: formData
-        name: image
-        type: file
+        schema:
+          $ref: '#/definitions/controllers.ArticleInput'
       produces:
       - application/json
       responses:
@@ -292,7 +284,7 @@ paths:
       summary: Get article by id.
       tags:
       - Article
-    post:
+    put:
       consumes:
       - multipart/form-data
       parameters:
@@ -301,33 +293,12 @@ paths:
         name: id
         required: true
         type: string
-      - description: title
-        in: formData
-        name: title
+      - description: 'body for update article (example ids input: ''1,2,3'')'
+        in: body
+        name: Body
         required: true
-        type: string
-      - description: content
-        in: formData
-        name: content
-        required: true
-        type: string
-      - description: description
-        in: formData
-        name: description
-        required: true
-        type: string
-      - description: 'tags tags id (ex: 1,2,3)'
-        in: formData
-        name: tag_ids
-        type: string
-      - description: 'categories id (ex: 1,2,3)'
-        in: formData
-        name: category_ids
-        type: string
-      - description: image
-        in: formData
-        name: image
-        type: file
+        schema:
+          $ref: '#/definitions/controllers.ArticleInput'
       produces:
       - application/json
       responses:

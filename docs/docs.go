@@ -52,9 +52,6 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "consumes": [
-                    "multipart/form-data"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -64,43 +61,13 @@ const docTemplate = `{
                 "summary": "Create Article.",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "title",
-                        "name": "title",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content",
-                        "name": "content",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "description",
-                        "name": "description",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "tags tags id (ex: 1,2,3)",
-                        "name": "tag_ids",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "categories id (ex: 1,2,3)",
-                        "name": "category_ids",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "image",
-                        "name": "image",
-                        "in": "formData"
+                        "description": "body for create article (example ids input: '1,2,3')",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ArticleInput"
+                        }
                     }
                 ],
                 "responses": {
@@ -371,7 +338,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "put": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -396,43 +363,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "title",
-                        "name": "title",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content",
-                        "name": "content",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "description",
-                        "name": "description",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "tags tags id (ex: 1,2,3)",
-                        "name": "tag_ids",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "categories id (ex: 1,2,3)",
-                        "name": "category_ids",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "image",
-                        "name": "image",
-                        "in": "formData"
+                        "description": "body for update article (example ids input: '1,2,3')",
+                        "name": "Body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ArticleInput"
+                        }
                     }
                 ],
                 "responses": {
@@ -1134,6 +1071,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.ArticleInput": {
+            "type": "object",
+            "properties": {
+                "category_ids": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "tag_ids": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "controllers.CategoryInput": {
             "type": "object",
             "properties": {
@@ -1221,7 +1181,7 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "image_path": {
+                "image_url": {
                     "type": "string"
                 },
                 "is_published": {

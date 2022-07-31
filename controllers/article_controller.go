@@ -4,9 +4,7 @@ import (
 	"final-project/models"
 	"final-project/utils"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -18,6 +16,7 @@ type ArticleInput struct {
 	Title       string `json:"title"`
 	Content     string `json:"content"`
 	Description string `json:"description"`
+	ImageUrl    string `json:"image_url"`
 	Tags        string `json:"tag_ids"`
 	Categories  string `json:"category_ids"`
 }
@@ -99,42 +98,35 @@ func GetArticleBySlug(c *gin.Context) {
 // @Summary     Create Article.
 // @Tags        Article
 // @Produce     json
-// @Accept multipart/form-data
-// @Param title formData string true "title"
-// @Param content formData string true "content"
-// @Param description formData string true "description"
-// @Param tag_ids formData string false "tags tags id (ex: 1,2,3)"
-// @Param category_ids formData string false "categories id (ex: 1,2,3)"
-// @Param image formData file false "image"
+// @Param Body body ArticleInput true "body for create article (example ids input: '1,2,3')"
 // @Success     201 {object} models.Article
 // @Router      /articles [post]
 // @Security ApiKeyAuth
 func CreateArticle(c *gin.Context) {
 	var errs = []string{}
+	var input ArticleInput
 
 	db := c.MustGet("db").(*gorm.DB)
 
-	article := models.Article{
-		Title:       c.PostForm("title"),
-		Content:     c.PostForm("content"),
-		Description: c.PostForm("description"),
-		IsPublished: false,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	filepath, err := utils.UploadFile(c, "articles", "image")
-
-	if err != nil {
-		fmt.Println("Upload failed")
-	} else {
-		article.ImagePath = filepath
-	}
 	userID, err := utils.ExtractTokenID(c)
 
 	if err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	article := models.Article{
+		Title:       input.Title,
+		ImageUrl:    input.ImageUrl,
+		Content:     input.Content,
+		Description: input.Description,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	article.GetSlug(db)
@@ -145,8 +137,8 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
-	categories := strings.Split(c.PostForm("category_ids"), ",")
-	tags := strings.Split(c.PostForm("tag_ids"), ",")
+	categories := strings.Split(input.Categories, ",")
+	tags := strings.Split(input.Tags, ",")
 
 	category_ids := utils.SliceStringToUInt(categories)
 	tag_ids := utils.SliceStringToUInt(tags)
@@ -172,40 +164,33 @@ func CreateArticle(c *gin.Context) {
 // @Accept multipart/form-data
 // @Produce     json
 // @Param id path string true "article id"
-// @Param title formData string true "title"
-// @Param content formData string true "content"
-// @Param description formData string true "description"
-// @Param tag_ids formData string false "tags tags id (ex: 1,2,3)"
-// @Param category_ids formData string false "categories id (ex: 1,2,3)"
-// @Param image formData file false "image"
+// @Param Body body ArticleInput true "body for update article (example ids input: '1,2,3')"
 // @Success     200 {object} models.Article
-// @Router      /articles/{id} [post]
+// @Router      /articles/{id} [put]
 // @Security ApiKeyAuth
 func UpdateArticle(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
-
+	var input ArticleInput
 	article := models.Article{}
+	details := models.Article{}
 
-	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
+	if err := db.Where("id=?", c.Param("id")).First(&article).First(&details).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
 	var errs = []string{}
 
 	updated := models.Article{
-		Title:       c.PostForm("title"),
-		Content:     c.PostForm("content"),
-		Description: c.PostForm("description"),
+		Title:       input.Title,
+		Content:     input.Content,
+		Description: input.Description,
 		UpdatedAt:   time.Now(),
-	}
-
-	filepath, err := utils.UploadFile(c, "articles", "image")
-
-	if err != nil {
-		fmt.Println("Upload failed")
-	} else {
-		updated.ImagePath = filepath
 	}
 
 	article.GetSlug(db)
@@ -215,8 +200,8 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	categories := strings.Split(c.PostForm("category_ids"), ",")
-	tags := strings.Split(c.PostForm("tag_ids"), ",")
+	categories := strings.Split(input.Categories, ",")
+	tags := strings.Split(input.Tags, ",")
 
 	category_ids := utils.SliceStringToUInt(categories)
 	tag_ids := utils.SliceStringToUInt(tags)
@@ -225,9 +210,7 @@ func UpdateArticle(c *gin.Context) {
 	errs = append(errs, article.InsertTags(db, tag_ids)...)
 
 	if len(errs) > 0 {
-		if err := article.Delete(db); err != nil {
-			fmt.Println(err.Error())
-		}
+		article.RestoreUpdate(db, &details)
 		utils.CreateResponse(c, http.StatusBadRequest, errs)
 		return
 	}
@@ -237,7 +220,8 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	utils.CreateResponse(c, http.StatusCreated, article)
+	article.GetDetails(db)
+	utils.CreateResponse(c, http.StatusOK, article)
 }
 
 // Delete Article godoc
@@ -255,15 +239,6 @@ func DeleteArticle(c *gin.Context) {
 	if err := db.Where("id=?", c.Param("id")).First(&article).Error; err != nil {
 		utils.CreateResponse(c, http.StatusNotFound, "data not found")
 		return
-	}
-
-	filePathSlice := strings.Split(article.ImagePath, "/")
-	fileName := filePathSlice[len(filePathSlice)-1]
-
-	err := os.Remove("public/upload/articles/" + fileName)
-
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	if err := article.Delete(db); err != nil {

@@ -36,7 +36,6 @@ func main() {
 	err := godotenv.Load(".env")
 	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err.Error())
-		// fmt.Println(err.Error())
 	}
 
 	// programmatically set swagger info

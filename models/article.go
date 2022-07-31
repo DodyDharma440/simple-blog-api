@@ -7,20 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// id: number;
-// title: string;
-// image_path: string;
-// slug: string;
-// content: string;
-// description: string;
-// readonly createdAt?: string;
-// readonly updatedAt?: string;
-// readonly deletedAt?: string;
-
 type Article struct {
 	ID          uint              `gorm:"primary_key;auto_increment" json:"id"`
 	Title       string            `gorm:"size:100;unique;not null" json:"title"`
-	ImagePath   string            `gorm:"size:255;not null" json:"image_path"`
+	ImageUrl    string            `gorm:"size:255;not null" json:"image_url"`
 	Slug        string            `gorm:"size:100;unique;not null" json:"slug"`
 	Content     string            `gorm:"not null" json:"content"`
 	Description string            `gorm:"size:255;not null" json:"description"`
@@ -63,6 +53,21 @@ func (a *Article) Delete(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (a *Article) RestoreUpdate(db *gorm.DB, details *Article) {
+	category_ids := []uint{}
+	for _, c := range a.Categories {
+		category_ids = append(category_ids, c.CategoryID)
+	}
+
+	tag_ids := []uint{}
+	for _, t := range a.Tags {
+		tag_ids = append(tag_ids, t.TagID)
+	}
+
+	a.InsertCategories(db, category_ids)
+	a.InsertTags(db, tag_ids)
 }
 
 func (a *Article) BeforeUpdate(db *gorm.DB) error {
