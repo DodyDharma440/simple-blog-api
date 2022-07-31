@@ -2,21 +2,42 @@ package config
 
 import (
 	"final-project/models"
+	"final-project/utils"
 	"fmt"
+	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-const (
-	username = "postgres"
-	password = "admin"
-	dbName   = "sanber_go_final_project"
-)
-
 func ConnectDB() *gorm.DB {
-	dsn := fmt.Sprintf("host=localhost user=%v password=%v dbname=%v port=5432 sslmode=disable TimeZone=Asia/Shanghai", username, password, dbName)
+	environment := utils.GetEnv("ENVIRONMENT", "development")
+
+	host := "localhost"
+	username := "postgres"
+	password := "admin"
+	dbName := "sanber_go_final_project"
+	port := "5432"
+	sslMode := "disable"
+
+	if environment == "production" {
+		host = os.Getenv("DB_HOST")
+		username = os.Getenv("DB_USERNAME")
+		password = os.Getenv("DB_PASSWORD")
+		dbName = os.Getenv("DB_NAME")
+		port = os.Getenv("DB_PORT")
+		sslMode = "require"
+	}
+
+	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=Asia/Shanghai",
+		host,
+		username,
+		password,
+		dbName,
+		port,
+		sslMode,
+	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
