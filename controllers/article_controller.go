@@ -513,12 +513,12 @@ func GetReplyComments(c *gin.Context) {
 	_comments := []models.ReplyArticleComment{}
 
 	for _, comment := range comments {
-		if err := comment.GetParent(db); err != nil {
+		if err := comment.GetDetails(db); err != nil {
 			utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		if err := comment.GetDetails(db); err != nil {
+		if err := comment.GetParent(db); err != nil {
 			utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -591,4 +591,52 @@ func CreateReplyComment(c *gin.Context) {
 	}
 
 	utils.CreateResponse(c, http.StatusCreated, &comment)
+}
+
+// Delete Reply Comment godoc
+// @Summary     Delete Reply Comment.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "reply comment id"
+// @Success     200 {object} bool
+// @Router      /articles/comments/replies/{id} [delete]
+// @Security ApiKeyAuth
+func DeleteReplyComment(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+	var replyComment models.ReplyArticleComment
+	var comment models.ArticleComment
+
+	userID, err := utils.ExtractTokenID(c)
+
+	if err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := db.Where("id=?", c.Param("id")).First(&replyComment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	if err := db.Where("id=?", replyComment.CommentID).First(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	if userID != comment.UserID && userID != replyComment.UserID {
+		utils.CreateResponse(c, http.StatusBadRequest, "hanya pembuat komentar yang dapat menghapus komentar")
+		return
+	}
+
+	if err := db.Delete(&comment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := db.Delete(&replyComment).Error; err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.CreateResponse(c, http.StatusOK, true)
 }

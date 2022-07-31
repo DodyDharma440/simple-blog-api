@@ -212,11 +212,18 @@ type ReplyArticleComment struct {
 
 func (r *ReplyArticleComment) GetParent(db *gorm.DB) error {
 	var parent ArticleComment
+	var user User
 
 	if err := db.Where("id=?", r.ParentID).First(&parent).Error; err != nil {
 		return err
 	}
+
+	if err := db.Where("id", parent.UserID).First(&user).Error; err != nil {
+		return err
+	}
+
 	r.Parent = parent
+	r.Parent.User = user
 
 	return nil
 }

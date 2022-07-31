@@ -69,10 +69,11 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	commentRoutes := r.Group("/articles")
 	commentRoutes.Use(middlewares.JwtAuth())
 	r.GET("/articles/:id/comments", controllers.GetComments)
-	r.GET("/articles/comments/:id/replies", controllers.GetReplyComments)
 	commentRoutes.POST("/:id/comments", controllers.CreateComment)
 	commentRoutes.DELETE("/comments/:id", controllers.DeleteComment)
+	r.GET("/articles/comments/:id/replies", controllers.GetReplyComments)
 	commentRoutes.POST("/comments/:id/replies", controllers.CreateReplyComment)
+	commentRoutes.DELETE("/comments/replies/:id", controllers.DeleteReplyComment)
 
 	// docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -113,6 +113,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/articles/comments/replies/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Article"
+                ],
+                "summary": "Delete Reply Comment.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "reply comment id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            }
+        },
         "/articles/comments/{id}": {
             "delete": {
                 "security": [

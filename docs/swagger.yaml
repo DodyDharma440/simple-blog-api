@@ -450,6 +450,26 @@ paths:
       summary: Create Reply Comment.
       tags:
       - Article
+  /articles/comments/replies/{id}:
+    delete:
+      parameters:
+      - description: reply comment id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+      security:
+      - ApiKeyAuth: []
+      summary: Delete Reply Comment.
+      tags:
+      - Article
   /articles/publish/{id}:
     patch:
       parameters:
