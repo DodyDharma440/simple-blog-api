@@ -4,8 +4,12 @@ import (
 	"final-project/config"
 	"final-project/docs"
 	"final-project/routes"
+	"final-project/utils"
+	"log"
 
 	_ "final-project/docs"
+
+	"github.com/joho/godotenv"
 )
 
 // @title           Swagger Example API
@@ -28,11 +32,16 @@ import (
 // @name Authorization
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	// programmatically set swagger info
 	docs.SwaggerInfo.Title = "Blog API"
 	docs.SwaggerInfo.Description = "This API Blog."
 	docs.SwaggerInfo.Version = "2.0"
-	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.Host = utils.GetEnv("SWAGGER_HOST", "localhost:8080")
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	db := config.ConnectDB()
@@ -40,5 +49,5 @@ func main() {
 	defer sqlDB.Close()
 
 	r := routes.SetupRouter(db)
-	r.Run(":8080")
+	r.Run()
 }
