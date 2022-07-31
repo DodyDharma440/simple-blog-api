@@ -1,1 +1,1 @@
-web:bin/final-project
+web: bin/final-project
