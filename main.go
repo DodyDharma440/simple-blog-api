@@ -6,6 +6,7 @@ import (
 	"final-project/routes"
 	"final-project/utils"
 	"log"
+	"os"
 
 	_ "final-project/docs"
 
@@ -33,7 +34,7 @@ import (
 
 func main() {
 	err := godotenv.Load(".env")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		log.Fatal(err.Error())
 		// fmt.Println(err.Error())
 	}
