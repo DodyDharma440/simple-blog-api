@@ -18,6 +18,7 @@ type ArticleInput struct {
 	Description string `json:"description"`
 	ImageUrl    string `json:"image_url"`
 	Tags        string `json:"tag_ids"`
+	TagsNew     string `json:"tags"`
 	Categories  string `json:"category_ids"`
 }
 
@@ -144,7 +145,7 @@ func CreateArticle(c *gin.Context) {
 	tag_ids := utils.SliceStringToUInt(tags)
 
 	errs = append(errs, article.InsertCategories(db, category_ids)...)
-	errs = append(errs, article.InsertTags(db, tag_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids, strings.Split(input.TagsNew, ","))...)
 
 	if len(errs) > 0 {
 		if err := article.Delete(db); err != nil {
@@ -213,7 +214,7 @@ func UpdateArticle(c *gin.Context) {
 	tag_ids := utils.SliceStringToUInt(tags)
 
 	errs = append(errs, article.InsertCategories(db, category_ids)...)
-	errs = append(errs, article.InsertTags(db, tag_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids, strings.Split(input.TagsNew, ","))...)
 
 	if len(errs) > 0 {
 		article.RestoreUpdate(db, &details)
@@ -288,7 +289,7 @@ func PublishArticle(c *gin.Context) {
 	var errs = []string{}
 
 	errs = append(errs, article.InsertCategories(db, category_ids)...)
-	errs = append(errs, article.InsertTags(db, tag_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids, []string{})...)
 
 	if len(errs) > 0 {
 		if err := article.Delete(db); err != nil {
@@ -339,7 +340,7 @@ func UnpublishArticle(c *gin.Context) {
 	var errs = []string{}
 
 	errs = append(errs, article.InsertCategories(db, category_ids)...)
-	errs = append(errs, article.InsertTags(db, tag_ids)...)
+	errs = append(errs, article.InsertTags(db, tag_ids, []string{})...)
 
 	if len(errs) > 0 {
 		if err := article.Delete(db); err != nil {

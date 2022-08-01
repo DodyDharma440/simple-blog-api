@@ -51,6 +51,7 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/urfave/cli/v2 v2.11.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.0.0-20220726230323-06994584191e // indirect
 	golang.org/x/sys v0.0.0-20220727055044-e65921a090b8 // indirect
 	golang.org/x/text v0.3.7 // indirect

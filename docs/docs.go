@@ -1086,6 +1086,9 @@ const docTemplate = `{
                 "tag_ids": {
                     "type": "string"
                 },
+                "tags": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"gorm.io/gorm"
 )
 
@@ -71,7 +72,7 @@ func (a *Article) RestoreUpdate(db *gorm.DB, details *Article) {
 
 	db.Model(&a).Updates(details)
 	a.InsertCategories(db, category_ids)
-	a.InsertTags(db, tag_ids)
+	a.InsertTags(db, tag_ids, []string{})
 }
 
 func (a *Article) BeforeUpdate(db *gorm.DB) error {
@@ -114,7 +115,7 @@ func (a *Article) InsertCategories(db *gorm.DB, ids []uint) []string {
 	return errs
 }
 
-func (a *Article) InsertTags(db *gorm.DB, ids []uint) []string {
+func (a *Article) InsertTags(db *gorm.DB, ids []uint, tags []string) []string {
 	errs := []string{}
 
 	for _, id := range ids {
@@ -134,6 +135,47 @@ func (a *Article) InsertTags(db *gorm.DB, ids []uint) []string {
 		if err := db.Create(&tInput).Error; err != nil {
 			errs = append(errs, err.Error())
 		}
+	}
+
+	for _, name := range tags {
+		exist := Tag{}
+
+		if err := db.Where("name=?", name).First(&exist).Error; err != nil {
+			tag := &Tag{
+				Name:      name,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			if err := db.Create(&tag).Error; err != nil {
+				fmt.Println(err.Error())
+			}
+
+			tInput := ArticleTag{
+				ArticleID: a.ID,
+				TagID:     tag.ID,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			if err := db.Create(&tInput).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+
+		if !slices.Contains(ids, exist.ID) {
+			tInput := ArticleTag{
+				ArticleID: a.ID,
+				TagID:     exist.ID,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+
+			if err := db.Create(&tInput).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+
 	}
 
 	return errs

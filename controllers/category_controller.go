@@ -4,6 +4,7 @@ import (
 	"final-project/models"
 	"final-project/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -69,10 +70,17 @@ func CreateCategory(c *gin.Context) {
 	}
 
 	category := models.Category{
-		Name: input.Name,
+		Name:      input.Name,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	db := c.MustGet("db").(*gorm.DB)
+
+	if err := category.Validate(); len(err) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	if err := db.Create(&category).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
@@ -107,9 +115,15 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	var updated models.Category
+	updated := models.Category{
+		Name:      input.Name,
+		UpdatedAt: time.Now(),
+	}
 
-	updated.Name = input.Name
+	if err := updated.Validate(); len(err) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	if err := db.Model(&category).Updates(updated).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())

@@ -12,6 +12,8 @@ definitions:
         type: string
       tag_ids:
         type: string
+      tags:
+        type: string
       title:
         type: string
     type: object
