@@ -38,12 +38,18 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	swaggerSchemes := []string{"http"}
+
+	if utils.GetEnv("ENVIRONMENT", "development") == "production" {
+		swaggerSchemes = []string{"https"}
+	}
+
 	// programmatically set swagger info
 	docs.SwaggerInfo.Title = "Blog API"
 	docs.SwaggerInfo.Description = "This API Blog."
 	docs.SwaggerInfo.Version = "2.0"
 	docs.SwaggerInfo.Host = utils.GetEnv("SWAGGER_HOST", "localhost:8080")
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	docs.SwaggerInfo.Schemes = swaggerSchemes
 
 	db := config.ConnectDB()
 	sqlDB, _ := db.DB()
