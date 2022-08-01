@@ -60,6 +60,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	r.GET("/articles", controllers.GetArticles)
 	r.GET("/articles/:id", controllers.GetArticle)
 	r.GET("/articles/slug/:slug", controllers.GetArticleBySlug)
+	r.GET("/articles/tag/:tag", controllers.GetArticleByTag)
+	r.GET("/articles/category/:id", controllers.GetArticleByCategory)
 	articleRoutes.POST("/", controllers.CreateArticle)
 	articleRoutes.PUT("/:id", controllers.UpdateArticle)
 	articleRoutes.DELETE("/:id", controllers.DeleteArticle)

@@ -95,6 +95,81 @@ func GetArticleBySlug(c *gin.Context) {
 	utils.CreateResponse(c, http.StatusOK, article)
 }
 
+// Get Article godoc
+// @Summary     Get article by tag name.
+// @Tags        Article
+// @Produce     json
+// @Param tag path string true "tag name"
+// @Success     200 {object} []models.Article
+// @Router      /articles/tag/{tag} [get]
+func GetArticleByTag(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+	var tag models.Tag
+
+	if err := db.Where("name=?", c.Param("tag")).First(&tag).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	var articles []models.Article
+	var tags []models.ArticleTag
+
+	if err := db.Where("tag_id=?", tag.ID).Find(&tags).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	for _, tag := range tags {
+		article := models.Article{}
+		err := db.Where("id=?", tag.ArticleID).First(&article).Error
+
+		article.GetDetails(db)
+		if err == nil {
+			articles = append(articles, article)
+			return
+		}
+	}
+
+	utils.CreateResponse(c, http.StatusOK, &articles)
+}
+
+// Get Article godoc
+// @Summary     Get article by category id.
+// @Tags        Article
+// @Produce     json
+// @Param id path string true "category id"
+// @Success     200 {object} []models.Article
+// @Router      /articles/category/{id} [get]
+func GetArticleByCategory(c *gin.Context) {
+	db := c.MustGet("db").(*gorm.DB)
+	var category models.Category
+
+	if err := db.Where("id=?", c.Param("id")).First(&category).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	var articles []models.Article
+	var categories []models.ArticleCategory
+
+	if err := db.Where("category_id=?", category.ID).Find(&categories).Error; err != nil {
+		utils.CreateResponse(c, http.StatusNotFound, "data not found")
+		return
+	}
+
+	for _, category := range categories {
+		article := models.Article{}
+		err := db.Where("id=?", category.ArticleID).First(&article).Error
+
+		article.GetDetails(db)
+		if err == nil {
+			articles = append(articles, article)
+		}
+	}
+
+	utils.CreateResponse(c, http.StatusOK, &articles)
+}
+
 // Create Article godoc
 // @Summary     Create Article.
 // @Tags        Article

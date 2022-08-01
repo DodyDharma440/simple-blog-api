@@ -356,6 +356,26 @@ paths:
       summary: Create Comment.
       tags:
       - Article
+  /articles/category/{id}:
+    get:
+      parameters:
+      - description: category id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Article'
+            type: array
+      summary: Get article by category id.
+      tags:
+      - Article
   /articles/comments/{id}:
     delete:
       parameters:
@@ -477,6 +497,26 @@ paths:
           schema:
             $ref: '#/definitions/models.Article'
       summary: Get article by slug.
+      tags:
+      - Article
+  /articles/tag/{tag}:
+    get:
+      parameters:
+      - description: tag name
+        in: path
+        name: tag
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Article'
+            type: array
+      summary: Get article by tag name.
       tags:
       - Article
   /articles/unpublish/{id}:
