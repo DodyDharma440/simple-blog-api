@@ -122,7 +122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Delete Reply Comment.",
                 "parameters": [
@@ -155,7 +155,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Delete Comment.",
                 "parameters": [
@@ -183,7 +183,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Get Reply Comments by Comment ID.",
                 "parameters": [
@@ -217,7 +217,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Create Reply Comment.",
                 "parameters": [
@@ -478,7 +478,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Get Comments by Article ID.",
                 "parameters": [
@@ -512,7 +512,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Create Comment.",
                 "parameters": [

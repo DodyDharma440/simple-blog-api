@@ -26,6 +26,20 @@ type Article struct {
 	User        User              `json:"author"`
 }
 
+func (a *Article) Validate(_ *gorm.DB) []string {
+	errs := []string{}
+
+	if a.Title == "" {
+		errs = append(errs, "Title artikel harus diisi")
+	}
+
+	if a.ImageUrl != "" && !strings.Contains(a.ImageUrl, "http://") && !strings.Contains(a.ImageUrl, "https://") {
+		errs = append(errs, "Image url tidak valid")
+	}
+
+	return errs
+}
+
 func (a *Article) GetSlug(_ *gorm.DB) {
 	slugSlice := strings.Split(a.Title, " ")
 	slug := strings.ToLower(strings.Join(slugSlice, "-"))
@@ -93,22 +107,24 @@ func (a *Article) BeforeUpdate(db *gorm.DB) error {
 func (a *Article) InsertCategories(db *gorm.DB, ids []uint) []string {
 	errs := []string{}
 
-	for _, id := range ids {
-		ca := Category{}
+	if len(ids) > 0 && ids[0] != 0 {
+		for _, id := range ids {
+			ca := Category{}
 
-		if err := db.Where("id=?", id).First(&ca).Error; err != nil {
-			errs = append(errs, err.Error())
-		}
+			if err := db.Where("id=?", id).First(&ca).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
 
-		caInput := ArticleCategory{
-			ArticleID:  a.ID,
-			CategoryID: uint(id),
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-		}
+			caInput := ArticleCategory{
+				ArticleID:  a.ID,
+				CategoryID: uint(id),
+				CreatedAt:  time.Now(),
+				UpdatedAt:  time.Now(),
+			}
 
-		if err := db.Create(&caInput).Error; err != nil {
-			errs = append(errs, err.Error())
+			if err := db.Create(&caInput).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
 		}
 	}
 
@@ -118,64 +134,65 @@ func (a *Article) InsertCategories(db *gorm.DB, ids []uint) []string {
 func (a *Article) InsertTags(db *gorm.DB, ids []uint, tags []string) []string {
 	errs := []string{}
 
-	for _, id := range ids {
-		ca := Tag{}
+	if len(ids) > 0 && ids[0] != 0 {
+		for _, id := range ids {
+			ca := Tag{}
 
-		if err := db.Where("id=?", id).First(&ca).Error; err != nil {
-			errs = append(errs, err.Error())
-		}
+			if err := db.Where("id=?", id).First(&ca).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
 
-		tInput := ArticleTag{
-			ArticleID: a.ID,
-			TagID:     uint(id),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		}
+			tInput := ArticleTag{
+				ArticleID: a.ID,
+				TagID:     uint(id),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
 
-		if err := db.Create(&tInput).Error; err != nil {
-			errs = append(errs, err.Error())
+			if err := db.Create(&tInput).Error; err != nil {
+				errs = append(errs, err.Error())
+			}
 		}
 	}
 
-	for _, name := range tags {
-		exist := Tag{}
+	fmt.Println("t => ", tags)
 
-		if err := db.Where("name=?", name).First(&exist).Error; err != nil {
-			tag := &Tag{
-				Name:      name,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			if err := db.Create(&tag).Error; err != nil {
-				fmt.Println(err.Error())
-			}
+	if len(tags) > 0 && tags[0] != "" {
+		for _, name := range tags {
+			existTag := Tag{}
 
 			tInput := ArticleTag{
 				ArticleID: a.ID,
-				TagID:     tag.ID,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
 
-			if err := db.Create(&tInput).Error; err != nil {
-				errs = append(errs, err.Error())
+			if err := db.Where("name=?", name).First(&existTag).Error; err != nil {
+				tag := &Tag{
+					Name:      name,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+
+				if err := db.Create(&tag).Error; err != nil {
+					fmt.Println(err.Error())
+				}
+
+				tInput.TagID = tag.ID
+
+				if err := db.Create(&tInput).Error; err != nil {
+					errs = append(errs, err.Error())
+				}
+			}
+
+			if !slices.Contains(ids, existTag.ID) {
+				tInput.TagID = existTag.ID
+
+				if err := db.Create(&tInput).Error; err != nil {
+					errs = append(errs, err.Error())
+				}
 			}
 		}
-
-		if !slices.Contains(ids, exist.ID) {
-			tInput := ArticleTag{
-				ArticleID: a.ID,
-				TagID:     exist.ID,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			if err := db.Create(&tInput).Error; err != nil {
-				errs = append(errs, err.Error())
-			}
-		}
-
 	}
 
 	return errs

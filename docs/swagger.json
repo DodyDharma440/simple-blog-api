@@ -115,7 +115,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Delete Reply Comment.",
                 "parameters": [
@@ -148,7 +148,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Delete Comment.",
                 "parameters": [
@@ -176,7 +176,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Get Reply Comments by Comment ID.",
                 "parameters": [
@@ -210,7 +210,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Create Reply Comment.",
                 "parameters": [
@@ -471,7 +471,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Get Comments by Article ID.",
                 "parameters": [
@@ -505,7 +505,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Article"
+                    "Article Comment"
                 ],
                 "summary": "Create Comment.",
                 "parameters": [

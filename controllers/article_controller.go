@@ -37,7 +37,7 @@ func GetArticles(c *gin.Context) {
 
 	db := c.MustGet("db").(*gorm.DB)
 
-	if err := db.Find(&articles).Error; err != nil {
+	if err := db.Order("created_at DESC").Find(&articles).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -124,10 +124,10 @@ func GetArticleByTag(c *gin.Context) {
 		err := db.Where("id=?", tag.ArticleID).First(&article).Error
 
 		article.GetDetails(db)
-		if err == nil {
-			articles = append(articles, article)
+		if err != nil {
 			return
 		}
+		articles = append(articles, article)
 	}
 
 	utils.CreateResponse(c, http.StatusOK, &articles)
@@ -162,9 +162,10 @@ func GetArticleByCategory(c *gin.Context) {
 		err := db.Where("id=?", category.ArticleID).First(&article).Error
 
 		article.GetDetails(db)
-		if err == nil {
-			articles = append(articles, article)
+		if err != nil {
+			return
 		}
+		articles = append(articles, article)
 	}
 
 	utils.CreateResponse(c, http.StatusOK, &articles)
@@ -207,6 +208,11 @@ func CreateArticle(c *gin.Context) {
 
 	article.GetSlug(db)
 	article.UserID = userID
+
+	if err := article.Validate(db); len(err) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	if err := db.Create(&article).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
@@ -267,10 +273,16 @@ func UpdateArticle(c *gin.Context) {
 		Title:       input.Title,
 		Content:     input.Content,
 		Description: input.Description,
+		ImageUrl:    input.ImageUrl,
 		UpdatedAt:   time.Now(),
 	}
 
 	updated.GetSlug(db)
+
+	if err := updated.Validate(db); len(err) > 0 {
+		utils.CreateResponse(c, http.StatusUnprocessableEntity, err)
+		return
+	}
 
 	if err := article.BeforeUpdate(db); err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
@@ -430,7 +442,7 @@ func UnpublishArticle(c *gin.Context) {
 
 // Get Comments by Article ID godoc
 // @Summary     Get Comments by Article ID.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "article id"
 // @Success     200 {object} []models.ArticleComment
@@ -461,7 +473,7 @@ func GetComments(c *gin.Context) {
 
 // Create Comment godoc
 // @Summary     Create Comment.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "article id"
 // @Param Body body CommentInput true "body for create user"
@@ -510,7 +522,7 @@ func CreateComment(c *gin.Context) {
 
 // Delete Comment godoc
 // @Summary     Delete Comment.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "comment id"
 // @Success     200 {object} bool
@@ -547,7 +559,7 @@ func DeleteComment(c *gin.Context) {
 
 // Get Comments by Comment ID godoc
 // @Summary     Get Reply Comments by Comment ID.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "comment id"
 // @Success     200 {object} []models.ReplyArticleComment
@@ -583,7 +595,7 @@ func GetReplyComments(c *gin.Context) {
 
 // Create Reply Comment godoc
 // @Summary     Create Reply Comment.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "comment id"
 // @Param Body body CommentInput true "body for create reply comment"
@@ -647,7 +659,7 @@ func CreateReplyComment(c *gin.Context) {
 
 // Delete Reply Comment godoc
 // @Summary     Delete Reply Comment.
-// @Tags        Article
+// @Tags        Article Comment
 // @Produce     json
 // @Param id path string true "reply comment id"
 // @Success     200 {object} bool

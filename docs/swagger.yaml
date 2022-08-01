@@ -330,7 +330,7 @@ paths:
             type: array
       summary: Get Comments by Article ID.
       tags:
-      - Article
+      - Article Comment
     post:
       parameters:
       - description: article id
@@ -355,7 +355,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create Comment.
       tags:
-      - Article
+      - Article Comment
   /articles/category/{id}:
     get:
       parameters:
@@ -395,7 +395,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete Comment.
       tags:
-      - Article
+      - Article Comment
   /articles/comments/{id}/replies:
     get:
       parameters:
@@ -415,7 +415,7 @@ paths:
             type: array
       summary: Get Reply Comments by Comment ID.
       tags:
-      - Article
+      - Article Comment
     post:
       parameters:
       - description: comment id
@@ -440,7 +440,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create Reply Comment.
       tags:
-      - Article
+      - Article Comment
   /articles/comments/replies/{id}:
     delete:
       parameters:
@@ -460,7 +460,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete Reply Comment.
       tags:
-      - Article
+      - Article Comment
   /articles/publish/{id}:
     patch:
       parameters:
