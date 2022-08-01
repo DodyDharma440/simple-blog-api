@@ -161,7 +161,6 @@ func CreateArticle(c *gin.Context) {
 // Update Article godoc
 // @Summary     Update Article.
 // @Tags        Article
-// @Accept multipart/form-data
 // @Produce     json
 // @Param id path string true "article id"
 // @Param Body body ArticleInput true "body for update article (example ids input: '1,2,3')"
@@ -179,6 +178,8 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
+	details.GetDetails(db)
+
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.CreateResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
@@ -193,9 +194,14 @@ func UpdateArticle(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	}
 
-	article.GetSlug(db)
+	updated.GetSlug(db)
 
 	if err := article.BeforeUpdate(db); err != nil {
+		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := db.Model(&article).Updates(updated).Error; err != nil {
 		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -212,11 +218,6 @@ func UpdateArticle(c *gin.Context) {
 	if len(errs) > 0 {
 		article.RestoreUpdate(db, &details)
 		utils.CreateResponse(c, http.StatusBadRequest, errs)
-		return
-	}
-
-	if err := db.Model(&article).Updates(updated).Error; err != nil {
-		utils.CreateResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 

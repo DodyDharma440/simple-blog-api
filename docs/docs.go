@@ -344,9 +344,6 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "consumes": [
-                    "multipart/form-data"
-                ],
                 "produces": [
                     "application/json"
                 ],

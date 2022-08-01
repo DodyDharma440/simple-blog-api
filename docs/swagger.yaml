@@ -285,8 +285,6 @@ paths:
       tags:
       - Article
     put:
-      consumes:
-      - multipart/form-data
       parameters:
       - description: article id
         in: path

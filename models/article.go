@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -56,16 +57,19 @@ func (a *Article) Delete(db *gorm.DB) error {
 }
 
 func (a *Article) RestoreUpdate(db *gorm.DB, details *Article) {
+	fmt.Println("details => ", details)
+
 	category_ids := []uint{}
-	for _, c := range a.Categories {
+	for _, c := range details.Categories {
 		category_ids = append(category_ids, c.CategoryID)
 	}
 
 	tag_ids := []uint{}
-	for _, t := range a.Tags {
+	for _, t := range details.Tags {
 		tag_ids = append(tag_ids, t.TagID)
 	}
 
+	db.Model(&a).Updates(details)
 	a.InsertCategories(db, category_ids)
 	a.InsertTags(db, tag_ids)
 }
